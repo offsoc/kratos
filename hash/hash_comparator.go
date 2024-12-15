@@ -9,8 +9,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
-	"crypto/md5"  //#nosec G501 -- compatibility for imported passwords
-	"crypto/sha1" //#nosec G505 -- compatibility for imported passwords
+	"crypto/md5"  //nolint:all // System compatibility for imported passwords
+	"crypto/sha1" //nolint:all // System compatibility for imported passwords
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -21,6 +21,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-crypt/crypt"
+	"github.com/go-crypt/crypt/algorithm/md5crypt"
+	"github.com/go-crypt/crypt/algorithm/shacrypt"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -32,10 +35,6 @@ import (
 	"golang.org/x/crypto/md4" //nolint:gosec // disable G115 G501 -- compatibility for imported passwords
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/scrypt"
-
-	"github.com/go-crypt/crypt"
-	"github.com/go-crypt/crypt/algorithm/md5crypt"
-	"github.com/go-crypt/crypt/algorithm/shacrypt"
 
 	"github.com/ory/kratos/driver/config"
 )
@@ -552,10 +551,11 @@ func compareCryptHelper(password []byte, hash string) error {
 	return errors.WithStack(ErrMismatchedHashAndPassword)
 }
 
+var regexSSHA = regexp.MustCompile(`\{([^}]*)\}`)
+
 // decodeSSHAHash decodes SSHA[1|256|512] encoded password hash in usual {SSHA...} format.
 func decodeSSHAHash(encodedHash string) (hasher string, salt, hash []byte, err error) {
-	re := regexp.MustCompile(`\{([^}]*)\}`)
-	match := re.FindStringSubmatch(string(encodedHash))
+	match := regexSSHA.FindStringSubmatch(string(encodedHash))
 
 	var index_of_salt_begin int
 	var index_of_hash_begin int
