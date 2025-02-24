@@ -460,7 +460,8 @@
             "linkedin",
             "linkedin_v2",
             "lark",
-            "x"
+            "x",
+            "fedcm-test"
           ],
           "examples": ["google"]
         },
@@ -521,7 +522,7 @@
         },
         "subject_source": {
           "title": "Microsoft subject source",
-          "description": "Controls which source the subject identifier is taken from by microsoft provider. If set to `userinfo` (the default) then the identifier is taken from the `sub` field of OIDC ID token or data received from `/userinfo` standard OIDC endpoint. If set to `me` then the `id` field of data structure received from `https://graph.microsoft.com/v1.0/me` is taken as an identifier.",
+          "description": "Controls which source the subject identifier is taken from by microsoft provider. If set to `userinfo` (the default) then the identifier is taken from the `sub` field of OIDC ID token or data received from `/userinfo` standard OIDC endpoint. If set to `me` then the `id` field of data structure received from `https://graph.microsoft.com/v1.0/me` is taken as an identifier. If the value is `oid` then the the oid (Object ID) is taken to identify users across different services.",
           "type": "string",
           "enum": ["userinfo", "me", "oid"],
           "default": "userinfo",
@@ -578,6 +579,19 @@
           "type": "string",
           "enum": ["auto", "never", "force"],
           "default": "auto"
+        },
+        "fedcm_config_url": {
+          "title": "Federation Configuration URL",
+          "description": "The URL where the FedCM IdP configuration is located for the provider. This is only effective in the Ory Network.",
+          "type": "string",
+          "format": "uri",
+          "examples": ["https://example.com/config.json"]
+        },
+        "net_id_token_origin_header": {
+          "title": "NetID Token Origin Header",
+          "description": "Contains the orgin header to be used when exchanging a NetID FedCM token for an ID token",
+          "type": "string",
+          "examples": ["https://example.com"]
         }
       },
       "additionalProperties": false,

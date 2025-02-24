@@ -110,12 +110,6 @@ func WithOrganizationID(organizationID uuid.NullUUID) FlowOption {
 	}
 }
 
-func WithRequestedAAL(aal identity.AuthenticatorAssuranceLevel) FlowOption {
-	return func(f *Flow) {
-		f.RequestedAAL = aal
-	}
-}
-
 func WithInternalContext(internalContext []byte) FlowOption {
 	return func(f *Flow) {
 		f.InternalContext = internalContext
@@ -233,7 +227,7 @@ preLoginHook:
 			// We only apply the filter on AAL1, because the OIDC strategy can only satsify
 			// AAL1.
 			strategyFilters = []StrategyFilter{func(s Strategy) bool {
-				return s.ID() == identity.CredentialsTypeOIDC
+				return s.ID() == identity.CredentialsTypeOIDC || s.ID() == identity.CredentialsTypeSAML
 			}}
 		}
 	}

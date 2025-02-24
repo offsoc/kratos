@@ -191,6 +191,20 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("case=should create an identity with an organization ID", func(t *testing.T) {
+		for name, ts := range map[string]*httptest.Server{"public": publicTS, "admin": adminTS} {
+			t.Run("endpoint="+name, func(t *testing.T) {
+				orgID := uuid.NullUUID{x.NewUUID(), true}
+				i := identity.CreateIdentityBody{
+					Traits:         []byte(`{"bar":"baz"}`),
+					OrganizationID: orgID,
+				}
+				res := send(t, ts, "POST", "/identities", http.StatusCreated, &i)
+				assert.EqualValues(t, orgID.UUID.String(), res.Get("organization_id").String(), "%s", res.Raw)
+			})
+		}
+	})
+
 	t.Run("case=should be able to import users", func(t *testing.T) {
 		ignoreDefault := []string{"id", "schema_url", "state_changed_at", "created_at", "updated_at"}
 		t.Run("without any credentials", func(t *testing.T) {
@@ -369,19 +383,48 @@ func TestHandler(t *testing.T) {
 				id := x.ParseUUID(res.Get("id").String())
 				ids = append(ids, id)
 			}
-			require.Equal(t, len(ids), identitiesAmount)
+			require.Len(t, ids, identitiesAmount)
 		})
 
 		t.Run("case=list few identities", func(t *testing.T) {
-			url := "/identities?ids=" + ids[0].String()
+			url := "/identities?ids=" + ids[0].String() + "&ids=" + ids[0].String() // duplicate ID is deduplicated in result
 			for i := 1; i < listAmount; i++ {
 				url += "&ids=" + ids[i].String()
 			}
 			res := get(t, adminTS, url, http.StatusOK)
 
 			identities := res.Array()
-			require.Equal(t, len(identities), listAmount)
+			require.Len(t, identities, listAmount)
 		})
+	})
+
+	t.Run("case=list identities by ID is capped at 500", func(t *testing.T) {
+		url := "/identities?ids=" + x.NewUUID().String()
+		for i := 0; i < 501; i++ {
+			url += "&ids=" + x.NewUUID().String()
+		}
+		res := get(t, adminTS, url, http.StatusBadRequest)
+		assert.Contains(t, res.Get("error.reason").String(), "must not exceed 500")
+	})
+
+	t.Run("case=list identities cannot combine filters", func(t *testing.T) {
+		filters := []string{
+			"ids=" + x.NewUUID().String(),
+			"credentials_identifier=foo@bar.com",
+			"preview_credentials_identifier_similar=bar.com",
+			"organization_id=" + x.NewUUID().String(),
+		}
+		for i := range filters {
+			for j := range filters {
+				if i == j {
+					continue // OK to use the same filter multiple times. Behavior varies by filter, though.
+				}
+
+				url := "/identities?" + filters[i] + "&" + filters[j]
+				res := get(t, adminTS, url, http.StatusBadRequest)
+				assert.Contains(t, res.Get("error.reason").String(), "cannot combine multiple filters")
+			}
+		}
 	})
 
 	t.Run("case=malformed ids should return an error", func(t *testing.T) {
@@ -748,6 +791,85 @@ func TestHandler(t *testing.T) {
 					res := send(t, ts, "POST", "/identities", http.StatusCreated, json.RawMessage(`{"traits": {"bar":"baz"}}`))
 					remove(t, ts, "/identities/"+res.Get("id").String(), http.StatusNoContent)
 					_ = get(t, ts, "/identities/"+res.Get("id").String(), http.StatusNotFound)
+				})
+			}
+		})
+
+		t.Run("case=should create an identity with linking marker", func(t *testing.T) {
+			for name, ts := range map[string]*httptest.Server{"public": publicTS, "admin": adminTS} {
+				t.Run("endpoint="+name, func(t *testing.T) {
+					trait := x.NewUUID().String()
+					payload := `
+						{
+							"traits": {
+								"bar": "` + trait + `"
+							},
+							"credentials": {
+								"oidc": {
+									"config": {
+										"providers": [
+											{
+												"subject": "` + trait + `",
+												"provider": "bar",
+												"use_auto_link": true
+											}
+										]
+									}
+								}
+							}
+						}`
+
+					res := send(t, ts, "POST", "/identities", http.StatusCreated, json.RawMessage(payload))
+					stateChangedAt := sqlxx.NullTime(res.Get("state_changed_at").Time())
+
+					i.Traits = []byte(res.Get("traits").Raw)
+					i.ID = x.ParseUUID(res.Get("id").String())
+					i.StateChangedAt = &stateChangedAt
+					assert.NotEmpty(t, res.Get("id").String())
+
+					i, err := reg.Persister().GetIdentityConfidential(context.Background(), i.ID)
+					require.NoError(t, err)
+
+					require.True(t, gjson.GetBytes(i.Credentials[identity.CredentialsTypeOIDC].Config, "providers.0.use_auto_link").Bool())
+				})
+			}
+		})
+
+		t.Run("case=should create an identity without linking marker omitempty", func(t *testing.T) {
+			for name, ts := range map[string]*httptest.Server{"public": publicTS, "admin": adminTS} {
+				t.Run("endpoint="+name, func(t *testing.T) {
+					trait := x.NewUUID().String()
+					payload := `
+						{
+							"traits": {
+								"bar": "` + trait + `"
+							},
+							"credentials": {
+								"oidc": {
+									"config": {
+										"providers": [
+											{
+												"subject": "` + trait + `",
+												"provider": "bar",
+												"use_auto_link": false
+											}
+										]
+									}
+								}
+							}
+						}`
+					res := send(t, ts, "POST", "/identities", http.StatusCreated, json.RawMessage(payload))
+					stateChangedAt := sqlxx.NullTime(res.Get("state_changed_at").Time())
+
+					i.Traits = []byte(res.Get("traits").Raw)
+					i.ID = x.ParseUUID(res.Get("id").String())
+					i.StateChangedAt = &stateChangedAt
+					assert.NotEmpty(t, res.Get("id").String())
+
+					i, err := reg.Persister().GetIdentityConfidential(context.Background(), i.ID)
+					require.NoError(t, err)
+
+					require.False(t, gjson.GetBytes(i.Credentials[identity.CredentialsTypeOIDC].Config, "providers.0.use_auto_link").Exists())
 				})
 			}
 		})
@@ -1170,6 +1292,60 @@ func TestHandler(t *testing.T) {
 				res := send(t, ts, "PATCH", "/identities/"+i.ID.String(), http.StatusBadRequest, &patch)
 
 				assert.EqualValues(t, "patch includes denied path: /credentials", res.Get("error.message").String(), "%s", res.Raw)
+			})
+		}
+	})
+
+	t.Run("case=PATCH should fail if credential orgs are updated", func(t *testing.T) {
+		uuid := x.NewUUID().String()
+		email := uuid + "@ory.sh"
+		i := &identity.Identity{Traits: identity.Traits(`{"email":"` + email + `"}`)}
+		i.SetCredentials(identity.CredentialsTypeOIDC, identity.Credentials{
+			Type:        identity.CredentialsTypeOIDC,
+			Identifiers: []string{email},
+			Config:      sqlxx.JSONRawMessage(`{"providers": [{"provider": "some-provider"}]}`),
+		})
+		require.NoError(t, reg.PrivilegedIdentityPool().CreateIdentity(context.Background(), i))
+
+		for name, ts := range map[string]*httptest.Server{"public": publicTS, "admin": adminTS} {
+			t.Run("endpoint="+name, func(t *testing.T) {
+				patch := []patch{
+					{"op": "replace", "path": "/credentials/oidc/config/providers/0/organization", "value": "foo"},
+				}
+
+				res := send(t, ts, "PATCH", "/identities/"+i.ID.String(), http.StatusBadRequest, &patch)
+
+				assert.EqualValues(t, "patch includes denied path: /credentials/oidc/config/providers/0/organization", res.Get("error.message").String(), "%s", res.Raw)
+			})
+		}
+	})
+
+	t.Run("case=PATCH should allow to update credential password", func(t *testing.T) {
+		uuid := x.NewUUID().String()
+		email := uuid + "@ory.sh"
+		password := "ljanf123akf"
+		p, err := reg.Hasher(ctx).Generate(context.Background(), []byte(password))
+		require.NoError(t, err)
+		i := &identity.Identity{Traits: identity.Traits(`{"email":"` + email + `"}`)}
+		i.SetCredentials(identity.CredentialsTypePassword, identity.Credentials{
+			Type:        identity.CredentialsTypePassword,
+			Identifiers: []string{email},
+			Config:      sqlxx.JSONRawMessage(`{"hashed_password":"` + string(p) + `"}`),
+		})
+		require.NoError(t, reg.PrivilegedIdentityPool().CreateIdentity(context.Background(), i))
+
+		for name, ts := range map[string]*httptest.Server{"public": publicTS, "admin": adminTS} {
+			t.Run("endpoint="+name, func(t *testing.T) {
+				patch := []patch{
+					{"op": "replace", "path": "/credentials/password/config/hashed_password", "value": "foo"},
+				}
+
+				send(t, ts, "PATCH", "/identities/"+i.ID.String(), http.StatusOK, &patch)
+
+				updated, err := reg.PrivilegedIdentityPool().GetIdentityConfidential(ctx, i.ID)
+				require.NoError(t, err)
+				assert.Equal(t, "foo",
+					gjson.GetBytes(updated.Credentials[identity.CredentialsTypePassword].Config, "hashed_password").String())
 			})
 		}
 	})

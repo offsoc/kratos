@@ -2,7 +2,7 @@ coverage:
   status:
     project:
       default:
-        target: 65%
+        target: auto
         threshold: 10%
         only_pulls: true
 ignore:
@@ -10,3 +10,4 @@ ignore:
   - "internal"
   - "docs"
   - "contrib"
+  - "selfservice/strategy/oidc/provider_netid.go" # No way to test this provider automatically

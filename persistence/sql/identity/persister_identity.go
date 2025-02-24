@@ -1085,11 +1085,13 @@ func (p *IdentityPersister) UpdateIdentity(ctx context.Context, i *identity.Iden
 			return err
 		}
 
-		// #nosec G201 -- TableName is static
+		tableName := "identity_credentials"
+		if tx.Dialect.Name() == "cockroach" {
+			tableName += "@identity_credentials_identity_id_idx"
+		}
 		if err := tx.RawQuery(
-			fmt.Sprintf(
-				`DELETE FROM %s WHERE identity_id = ? AND nid = ?`,
-				new(identity.Credentials).TableName(ctx)),
+			// #nosec G201 -- TableName is static
+			fmt.Sprintf(`DELETE FROM %s WHERE identity_id = ? AND nid = ?`, tableName),
 			i.ID, p.NetworkID(ctx)).Exec(); err != nil {
 			return sqlcon.HandleError(err)
 		}
@@ -1257,16 +1259,17 @@ func (p *IdentityPersister) VerifyAddress(ctx context.Context, code string) (err
 	return nil
 }
 
-func (p *IdentityPersister) UpdateVerifiableAddress(ctx context.Context, address *identity.VerifiableAddress) (err error) {
+func (p *IdentityPersister) UpdateVerifiableAddress(ctx context.Context, address *identity.VerifiableAddress, updateColumns ...string) (err error) {
 	ctx, span := p.r.Tracer(ctx).Tracer().Start(ctx, "persistence.sql.UpdateVerifiableAddress",
 		trace.WithAttributes(
 			attribute.Stringer("identity.id", address.IdentityID),
-			attribute.Stringer("network.id", p.NetworkID(ctx))))
+			attribute.Stringer("network.id", p.NetworkID(ctx)),
+			attribute.StringSlice("columns", updateColumns)))
 	defer otelx.End(span, &err)
 
 	address.NID = p.NetworkID(ctx)
 	address.Value = stringToLowerTrim(address.Value)
-	return update.Generic(ctx, p.GetConnection(ctx), p.r.Tracer(ctx).Tracer(), address)
+	return update.Generic(ctx, p.GetConnection(ctx), p.r.Tracer(ctx).Tracer(), address, updateColumns...)
 }
 
 func (p *IdentityPersister) validateIdentity(ctx context.Context, i *identity.Identity) (err error) {
@@ -1337,7 +1340,7 @@ func FindIdentityCredentialsTypeByName(con *pop.Connection, ct identity.Credenti
 	}
 
 	if !found {
-		return uuid.Nil, errors.WithStack(herodot.ErrInternalServerError.WithReasonf("The SQL adapter failed to return the appropriate credentials_type for nane %s. This is a bug in the code.", ct))
+		return uuid.Nil, errors.WithStack(herodot.ErrInternalServerError.WithReasonf("The SQL adapter failed to return the appropriate credentials_type for name %q. This is a bug in the code.", ct))
 	}
 
 	return result, nil
