@@ -140,8 +140,11 @@ func (s *Strategy) handleConflictingIdentity(ctx context.Context, w http.Respons
 
 	verdict = s.conflictingIdentityPolicy(ctx, existingIdentity, newIdentity, provider, claims)
 	if verdict == ConflictingIdentityVerdictMerge {
-		existingIdentity.SetCredentials(s.ID(), *creds)
-		if err := s.d.PrivilegedIdentityPool().UpdateIdentity(ctx, existingIdentity); err != nil {
+		if err = existingIdentity.MergeOIDCCredentials(s.ID(), *creds); err != nil {
+			return ConflictingIdentityVerdictUnknown, nil, nil, s.HandleError(ctx, w, r, loginFlow, provider.Config().ID, newIdentity.Traits, err)
+		}
+
+		if err = s.d.PrivilegedIdentityPool().UpdateIdentity(ctx, existingIdentity); err != nil {
 			return ConflictingIdentityVerdictUnknown, nil, nil, s.HandleError(ctx, w, r, loginFlow, provider.Config().ID, newIdentity.Traits, err)
 		}
 	}

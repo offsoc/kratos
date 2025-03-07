@@ -5,14 +5,16 @@
 
 **Table of Contents**
 
-- [ (2025-02-21)](#2025-02-21)
+- [ (2025-03-07)](#2025-03-07)
   - [Breaking Changes](#breaking-changes)
   - [Related issue(s)](#related-issues)
   - [Related issue(s)](#related-issues-1)
+  - [Related issue(s)](#related-issues-2)
+  - [Related issue(s)](#related-issues-3)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# [](https://github.com/ory/kratos/compare/v1.3.0...v) (2025-02-21)
+# [](https://github.com/ory/kratos/compare/v1.3.0...v) (2025-03-07)
 
 ## Breaking Changes
 
@@ -33,6 +35,30 @@ This patch changes the behavior of configuration item `foo` to do bar. To keep t
 behavior please do baz.
 ```
 
+-->
+
+## Related issue(s)
+
+<!--
+If this pull request
+
+1. is a fix for a known bug, link the issue where the bug was reported
+
+This patch changes the behavior of configuration item `foo` to do bar. To keep the existing
+behavior please do baz.
+```
+-->
+
+## Related issue(s)
+
+<!--
+If this pull request
+
+1. is a fix for a known bug, link the issue where the bug was reported
+
+This patch changes the behavior of configuration item `foo` to do bar. To keep the existing
+behavior please do baz.
+```
 -->
 
 ## Related issue(s)
@@ -88,7 +114,17 @@ Closes https://github.com/ory-corp/cloud/issues/7176
     
     ```
 
+* Also update identifiers ([#4321](https://github.com/ory/kratos/issues/4321)) ([7c63727](https://github.com/ory/kratos/commit/7c6372794a94868555f647f6160be8205072c506)):
+
+    This fixes a bug where when an identity is merged into another, the
+    identifier of the original identity was not updated.
+
 * Cancel conditional passkey before trying again ([#4247](https://github.com/ory/kratos/issues/4247)) ([d9f6f75](https://github.com/ory/kratos/commit/d9f6f75b6a43aad996f6390f73616a2cf596c6e4))
+* Check aal on sessions list endpoint ([#4305](https://github.com/ory/kratos/issues/4305)) ([44f97b8](https://github.com/ory/kratos/commit/44f97b85e36160b8cce272fd61fbe3ac7d810fbf)), closes [#3671](https://github.com/ory/kratos/issues/3671):
+
+    The session check to list a user's own sessions now requires the same AAL level as the whoami check.
+
+* Count MFA addresses in CountActiveMultiFactorCredentials for code method ([9860c9a](https://github.com/ory/kratos/commit/9860c9a4faa5bd5d725c742c4d4ce9473baa0963)), closes [ory/network#409](https://github.com/ory/network/issues/409)
 * Do not roll back transaction on partial identity insert error ([#4211](https://github.com/ory/kratos/issues/4211)) ([82660f0](https://github.com/ory/kratos/commit/82660f04e2f33d0aa86fccee42c90773a901d400))
 * Don't show oidc subject in login hints ([#4264](https://github.com/ory/kratos/issues/4264)) ([b95fd3f](https://github.com/ory/kratos/commit/b95fd3fa723521807824cad84e4a9ce812172311))
 * Duplicate autocomplete trigger ([6bbf915](https://github.com/ory/kratos/commit/6bbf91593a37e4973a86f610290ebab44df8dc81))
@@ -96,8 +132,26 @@ Closes https://github.com/ory-corp/cloud/issues/7176
 
     fix: allow b2b_sso hook in more places
 
+* Ensure that auto_link_credentials markers are being properly overwritten ([#4320](https://github.com/ory/kratos/issues/4320)) ([a4fd8ac](https://github.com/ory/kratos/commit/a4fd8acbbbd0cd0ff054e0f8737b076745aa71c8)), closes [#1234](https://github.com/ory/kratos/issues/1234) [#1234](https://github.com/ory/kratos/issues/1234):
+
+    <!--
+    Describe the big picture of your changes here to communicate to the
+    maintainers why we should accept this pull request.
+    
+    This text will be included in the changelog. If applicable, include
+    links to documentation or pieces of code.
+    If your change includes breaking changes please add a code block
+    documenting the breaking change:
+    
+    ```
+
 * Explicity set updated_at field when updating identity ([#4131](https://github.com/ory/kratos/issues/4131)) ([66afac1](https://github.com/ory/kratos/commit/66afac173dc08b1d6666b107cf7050a2b0b27774))
 * Gracefully handle unused index ([#4196](https://github.com/ory/kratos/issues/4196)) ([3dbeb64](https://github.com/ory/kratos/commit/3dbeb64b3f99a3aeba5f7126c301b72fda4c3e3c))
+* IdentityCreated is over-reporting on error inserts ([#4323](https://github.com/ory/kratos/issues/4323)) ([c3f4ecf](https://github.com/ory/kratos/commit/c3f4ecf2562ffe400e500da97a93327b6115ddb6)):
+
+    `defer` was the incorrect code path here, as we should only record
+    identity created if the transaction did not error (aka was rolled back).
+
 * Ignore CSRF on all apple provider callback URLs ([#4291](https://github.com/ory/kratos/issues/4291)) ([b60edba](https://github.com/ory/kratos/commit/b60edba1f4642f07b411271b6c7a442665dc2a74))
 * Improve linking on OIDC signup ([#4314](https://github.com/ory/kratos/issues/4314)) ([687d578](https://github.com/ory/kratos/commit/687d5787b12450895ba613ceee47da408917a0a7)), closes [#1234](https://github.com/ory/kratos/issues/1234) [#1234](https://github.com/ory/kratos/issues/1234):
 
@@ -112,6 +166,7 @@ Closes https://github.com/ory-corp/cloud/issues/7176
     
     ```
 
+* Incorrect if switch in previous sceen case in two step registration ([f8ee403](https://github.com/ory/kratos/commit/f8ee40396a36a2e7a348c9cf983dec7db13814c5)), closes [#374](https://github.com/ory/kratos/issues/374)
 * Incorrect query plan ([#4218](https://github.com/ory/kratos/issues/4218)) ([7d0e78a](https://github.com/ory/kratos/commit/7d0e78a4f6631b0662beee3b8e9dd0d774b875ea))
 * Order-by clause and span names ([#4200](https://github.com/ory/kratos/issues/4200)) ([b6278af](https://github.com/ory/kratos/commit/b6278af5c7ed7fb845a71ad0e64f8b87402a8f4b))
 * Pass on correct context during verification ([#4151](https://github.com/ory/kratos/issues/4151)) ([7e0b500](https://github.com/ory/kratos/commit/7e0b500aada9c1931c759a43db7360e85afb57e3))
@@ -125,6 +180,7 @@ Closes https://github.com/ory-corp/cloud/issues/7176
     session cookie set). In the callback, we now correctly handle the case
     in `alreadyAuthenticated` to return the session token exchange code.
 
+* Schema key ([#4332](https://github.com/ory/kratos/issues/4332)) ([306316f](https://github.com/ory/kratos/commit/306316fedf20467059776c003f8285880d272c95))
 * **sdk:** Add missing captcha group ([#4254](https://github.com/ory/kratos/issues/4254)) ([241111b](https://github.com/ory/kratos/commit/241111b21f5d96b26ff8bc8106dc8a527c68063b))
 * **sdk:** Remove incorrect attributes ([#4163](https://github.com/ory/kratos/issues/4163)) ([88c68aa](https://github.com/ory/kratos/commit/88c68aa07281a638c9897e76d300d1095b17601d))
 * Send correct verification status in post-recovery hook ([#4224](https://github.com/ory/kratos/issues/4224)) ([7f50400](https://github.com/ory/kratos/commit/7f5040080578e194dde3605dbb1a344fe9ff27ae)):
@@ -138,6 +194,19 @@ Closes https://github.com/ory-corp/cloud/issues/7176
 * Use context for readiness probes ([#4219](https://github.com/ory/kratos/issues/4219)) ([e6d2d4d](https://github.com/ory/kratos/commit/e6d2d4d0c04e60ab5b0658b9e5c4c52104446368))
 
 ### Chores
+
+* Document test migration ([#4265](https://github.com/ory/kratos/issues/4265)) ([9959545](https://github.com/ory/kratos/commit/9959545cb9d90364e1928fcc4f01b3171e052360)), closes [#1234](https://github.com/ory/kratos/issues/1234) [#1234](https://github.com/ory/kratos/issues/1234):
+
+    <!--
+    Describe the big picture of your changes here to communicate to the
+    maintainers why we should accept this pull request.
+    
+    This text will be included in the changelog. If applicable, include
+    links to documentation or pieces of code.
+    If your change includes breaking changes please add a code block
+    documenting the breaking change:
+    
+    ```
 
 * Upgrade to go 1.24 ([#4313](https://github.com/ory/kratos/issues/4313)) ([bdb046d](https://github.com/ory/kratos/commit/bdb046da36c290f775ad4cabdbe6191295252cc7)), closes [#1234](https://github.com/ory/kratos/issues/1234) [#1234](https://github.com/ory/kratos/issues/1234):
 
@@ -174,6 +243,7 @@ Closes https://github.com/ory-corp/cloud/issues/7176
 
 * Add a policy callback to customize OIDC credential linking ([#4302](https://github.com/ory/kratos/issues/4302)) ([e2f878a](https://github.com/ory/kratos/commit/e2f878a3ed25b4617bf6bd43b6e147d87d3b8ca2))
 * Add attributes to webhook events for better debugging ([#4206](https://github.com/ory/kratos/issues/4206)) ([00da05d](https://github.com/ory/kratos/commit/00da05da9f77bbfb68b364b3ba2a5d0a2d9e4f15))
+* Add captcha group to first-step registration ([eca4ae9](https://github.com/ory/kratos/commit/eca4ae9dcce37d03bbd1bf5f0cd492466c02acde))
 * Add context param to policy ([#4315](https://github.com/ory/kratos/issues/4315)) ([261596b](https://github.com/ory/kratos/commit/261596b7261c315b7d8291e886023c34fc9135c5))
 * Add explicit config flag for secure cookies ([#4180](https://github.com/ory/kratos/issues/4180)) ([2aabe12](https://github.com/ory/kratos/commit/2aabe12e5329acc807c495445999e5591bdf982b)):
 
@@ -208,12 +278,20 @@ Closes https://github.com/ory-corp/cloud/issues/7176
     
     See https://github.com/ory-corp/cloud/issues/7350
 
+* Add new Division ui node attributes ([235af52](https://github.com/ory/kratos/commit/235af527dea47b87ad0f18ff04f9b807e4639ae3)):
+
+    Division nodes may be used to hook dynamic scripts and are not actively used in the Ory Kratos open source.
+
 * Add oid as subject source for microsoft ([#4171](https://github.com/ory/kratos/issues/4171)) ([77beb4d](https://github.com/ory/kratos/commit/77beb4de5209cee0bea4b63dfec21d656cf64473)), closes [#4170](https://github.com/ory/kratos/issues/4170):
 
     In the case of Microsoft, using `sub` as an identifier can lead to problems. Because the use of OIDC at Microsoft is based on an app registration, the content of `sub` changes with every new app registration. `Sub` is therefore not uniquely related to the user. It is therefore not possible to transfer users from one app registration to another without further problems.
     https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
     
     With the use of `oid` it is possible to identify a user by a unique id.
+
+* Allow deleting password credentials ([#4304](https://github.com/ory/kratos/issues/4304)) ([f2212d4](https://github.com/ory/kratos/commit/f2212d48af47f24ca6e504ca98bc31afe6774241)):
+
+    The admin API did not allow to delete passwords at all. The restriction is now lifted to only block deletion of the first-factor credential if it is the last one.
 
 * Allow extra go migrations in persister ([#4183](https://github.com/ory/kratos/issues/4183)) ([7bec935](https://github.com/ory/kratos/commit/7bec935c33b9adb6033aaecfa9a6dbe6c9c3daa1))
 * Allow listing identities by organization ID ([#4115](https://github.com/ory/kratos/issues/4115)) ([b4c453b](https://github.com/ory/kratos/commit/b4c453b0472f67d0a52b345691f66aa48777a897))
@@ -295,6 +373,11 @@ Closes https://github.com/ory-corp/cloud/issues/7176
     correctly sometimes.
 
 * Use one transaction for `/admin/recovery/code` ([#4225](https://github.com/ory/kratos/issues/4225)) ([3e87e0c](https://github.com/ory/kratos/commit/3e87e0c4559736f9476eba943bac8d67cde91aad))
+* Webhook header allowlist configuration option ([#4309](https://github.com/ory/kratos/issues/4309)) ([871f5aa](https://github.com/ory/kratos/commit/871f5aab6d7b2a655ebcd6f0f90e79635ffc85f6)), closes [#4290](https://github.com/ory/kratos/issues/4290):
+
+    Adds a `clients.web_hook.header_allowlist` configuration option for
+    configuring the webhook header allowlist.
+
 
 ### Tests
 
